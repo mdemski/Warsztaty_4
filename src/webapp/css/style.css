@@ -1,3 +1,28 @@
-label, p.lead, p.small {
-    color: #fff;
+html {
+    background: url("https://static01.nyt.com/images/2017/05/11/t-magazine/bookstore-slide-2MCD/bookstore-slide-2MCD-superJumbo.jpg?quality=90&auto=webp") no-repeat center center fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+}
+
+div.bookContainer {
+    position: fixed;
+    left: 45%;
+    bottom: 40%;
+}
+
+td {
+    position: center;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1.5em;
+    line-height: 2em;
+    background: #e3e3e3;
+    border-bottom: 1px solid #c5c5c5;
+    border-top: 1px solid white;
+}
+
+div {
+    color: darkblue;
 }
