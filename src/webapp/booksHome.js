@@ -1,13 +1,14 @@
 $(function () {
+    var context = window.location.pathname;
 
     function ajaxFunction(dataForAjax, successAlert, failAlert) {
         return $.ajax(dataForAjax)
-            .done(function () {
+            .done(function (result) {
                 if (successAlert !== "") {
                     alert(successAlert);
                 }
-                // result.responseJSON; można usunąć??? TODO
-                // JSON.stringify(result); można usunąć??? TODO
+                result.responseJSON;
+                JSON.stringify(result);
             }).fail(function () {
                 alert(failAlert);
             });
@@ -17,7 +18,7 @@ $(function () {
 
     function getAllBooks() {
         var dataForAjax = {
-            url: "http://localhost:8282/books/",
+            url: context + "books/",
             data: {},
             method: "GET",
             dataType: "json",
@@ -33,21 +34,26 @@ $(function () {
         table.append("<tr>" + "<th>Tytuł</th>" + "<th>Usuwanie</th>" + "<th>Edytowanie</th>" + "</tr>");
         for (var i = 0; i < result.length; i++) {
             table.append("<tr>"
-                + "<td class='bookTitle'>" + result[i].title + "<div class='bookId' id=" + result[i].id + ">" + "</div>" + "</td>"
-                + "<td>" + "<button class='deleteBook' data-method='DELETE'>" + "Usuń" + "</button>" + "</td>"
-                + "<td>" + "<button class='editBook' data-method='PUT'>" + "Edytuj" + "</button>" + "</td>" + "</tr>");
+                + "<td> <section class='bookInfo'><dt class='bookTitle'>" + result[i].title
+                + "</dt><dd><div class='bookId' id=" + result[i].id + ">" + "</div>"
+                + "<input class='author' placeholder='" + result[i].author + "'><br>"
+                + "<input class='publisher' placeholder='" + result[i].publisher + "'><br>"
+                + "<input class='isbn' placeholder='" + result[i].isbn + "'><br>"
+                + "<input class='type' placeholder='" + result[i].type + "'>" + "</dd></dl></section></td>"
+                + "<td>" + "<button id='" + result[i].id + "' class='deleteBook' data-method='DELETE'>" + "Usuń" + "</button>" + "</td>"
+                + "<td>" + "<button id='" + result[i].id + "' class='editBook' data-method='PUT'>" + "Edytuj" + "</button>" + "</td>"
+                + "</tr>");
         }
+        var dds = $('dd');
+        dds.hide();
     }
 
     //wczytywanie danych
-    $('.bookContainer').on('click', 'tr', function moreInfo() {
-        var bookId = $(this).children(0).children(0).attr('id');
-        var div = $(this).children(0).find('.bookId');
-        div.slideToggle();
-        var tds = div.find('dd');
-        tds.hide();
+    $('.bookInfo').on('click', 'dt', function moreInfo() {
+        var bookId = $(this).next().find('.bookId').attr('id');
+        var dd = $(this).siblings(0);
         var dataForAjax = {
-            url: "http://localhost:8282/books/" + bookId,
+            url: context + "books/" + bookId,
             data: {},
             method: $('.bookContainer').data().method,
             dataType: "json",
@@ -57,23 +63,31 @@ $(function () {
         var failAlert = 'Nie udało się wczytać danych do książki';
         var data = ajaxFunction(dataForAjax, successAlert, failAlert);
         var result = data.valueOf().responseJSON;
-
         getDataBook();
 
         function getDataBook() {
-            var publ = result.title;
-            var autor = result.author;
-            var is = result.isbn;
-            var type = result.type;
+            var bookId = result.id;
+            var localPubl = result.publisher;
+            var localAutor = result.author;
+            var localIsbn = result.isbn;
+            var localType = result.type;
 
-            div.append(
-                '<p>Wydawca: ' + publ + '</p>' +
-                '<p>Autor: ' + autor + '</p>' +
-                '<p>ISBN: ' + is + '</p>' +
-                '<p>Typ: ' + type + '</p>');
+            console.log(localAutor);
 
+            author = localAutor;
+            publisher = localPubl;
+            isbn = localIsbn;
+            type = localType;
         }
+
+        dd.slideToggle();
     });
+    var author;
+    var publisher;
+    var isbn;
+    var type;
+
+    console.log(author);
 
     //dodawanie
     $('input[type="submit"]').on('click', function (e) {
@@ -85,7 +99,7 @@ $(function () {
         var addBookType = $('#addBookType').val();
 
         $.ajax({
-            url: "http://localhost:8282/books/",
+            url: context + "books/",
             data: JSON.stringify({
                 "isbn": addBookIsbn,
                 "title": addBookTitle,
@@ -101,35 +115,14 @@ $(function () {
         }).fail(function () {
             alert('Nie udało się dodać książki');
         });
-
-        // var url = "http://localhost:8282/books/";
-        // var ajaxMethod = $('input[type="submit"]').data().method;
-        // var ajaxData = JSON.stringify({
-        //     "isbn": addBookIsbn,
-        //     "title": addBookTitle,
-        //     "author": addBookAuthor,
-        //     "publisher": addBookPublisher,
-        //     "type": addBookType
-        // });
-        // var successAlert = 'Dodano książkę';
-        // var failAlert = 'Nie udało się dodać książki';
-        // var contentType = "application/json";
-        //
-        // var dataForAjax = {
-        //     url: url,
-        //     data: ajaxData,
-        //     dataType: contentType,
-        //     method: ajaxMethod
-        // };
-        // ajaxFunction(dataForAjax, successAlert, failAlert);
         $(this).trigger("reset");
     });
 
     //usuwanie
     $('.bookContainer').on('click', 'button.deleteBook', function deleteBook(e) {
         e.stopPropagation();
-        var bookId = $(this).parent().siblings().children().attr('id');
-        var url = 'http://localhost:8282/books/' + bookId;
+        var bookId = $(this)[0].id;
+        var url = context + "books/" + bookId;
         var successAlert = 'Książka została usunięta';
         var failAlert = 'Nie udało się usunąć książki';
         var ajaxMethod = $('button.deleteBook').data().method;
@@ -144,5 +137,36 @@ $(function () {
         };
         ajaxFunction(dataForAjax, successAlert, failAlert);
         location.reload();
+    });
+
+    //edycja książki
+    $('.bookContainer').on('click', 'button.editBook', function editBook(e) {
+        e.preventDefault();
+        var editBookId = $(this).parent().prev().prev().children(0).children(0).find('.bookId').attr('id');
+        var editBookTitle = $(this).parent().prev().prev().children(0).children(0)[0].innerText;
+        var editBookAuthor = $(this).parent().prev().prev().children(0).children(0).find('input.author').val();
+        var editBookPublisher = $(this).parent().prev().prev().children(0).children(0).find('input.publisher').val();
+        var editBookIsbn = $(this).parent().prev().prev().children(0).children(0).find('input.isbn').val();
+        var editBookType = $(this).parent().prev().prev().children(0).children(0).find('input.type').val();
+
+        $.ajax({
+            url: context + "books/",
+            data: JSON.stringify({
+                "id": editBookId,
+                "isbn": editBookIsbn,
+                "title": editBookTitle,
+                "author": editBookAuthor,
+                "publisher": editBookPublisher,
+                "type": editBookType
+            }),
+            contentType: "application/json",
+            method: $('button.editBook').data().method
+        }).done(function () {
+            alert('Poprawnie zmienioną książkę');
+            location.reload();
+        }).fail(function () {
+            alert('Nie udało się zmienić danych książki');
+        });
+        $(this).trigger("reset");
     });
 });
